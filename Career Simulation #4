@@ -1,1 +1,435 @@
 
+# Import the neccessary modules for data manipulation and visual representation
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+def compute_df():
+    # TODO: Implement this function
+    df = pd.read_csv('HR_comma_sep.csv')
+    return df
+
+df = compute_df()
+df.head()
+
+# Rename Columns
+# Renaming certain columns for better readability
+df = df.rename(columns={'satisfaction_level': 'satisfaction',
+                        'last_evaluation': 'evaluation',
+                        'number_project': 'projectCount',
+                        'average_montly_hours': 'averageMonthlyHours',
+                        'time_spend_company': 'yearsAtCompany',
+                        'Work_accident': 'workAccident',
+                        'promotion_last_5years': 'promotion',
+                        'sales' : 'department',
+                        'left' : 'turnover'
+                        })
+df.head()
+
+
+# Examine the dataset
+df.info()
+df.describe()
+df.head()
+df.tail()
+
+def compute_plt_figuresize(width, height):
+    plt.subplots(figsize=(width, height), facecolor='lightskyblue',
+                       layout='constrained')
+
+def compute_sns_hist(d=pd.DataFrame(), x = '', y = '', hue=None):
+    sns.histplot(data=d, x=x, y=y, hue=hue, alpha=1)
+    compute_plt_xlabel(s=x)
+    compute_plt_ylabel(s=y)
+
+def compute_plt_xlabel(s=''):
+    plt.xlabel(s)
+    pass
+
+def compute_plt_ylabel(s=''):
+    plt.ylabel(s)
+    pass
+
+compute_plt_figuresize(10, 10)
+compute_sns_hist(d = df, x = 'satisfaction', y='evaluation', hue='turnover')
+plt.show()
+
+compute_plt_figuresize(10, 10)
+compute_sns_hist(d = df, x = 'satisfaction', y='evaluation', hue='workAccident')
+plt.show()
+
+compute_plt_figuresize(10, 10)
+compute_sns_hist(d = df, x = 'satisfaction', y='evaluation', hue='promotion')
+plt.show()
+
+compute_plt_figuresize(10, 10)
+compute_sns_hist(d = df, x = 'satisfaction', y='evaluation', hue='yearsAtCompany')
+plt.show()
+
+compute_plt_figuresize(10, 10)
+compute_sns_hist(d = df, x = 'satisfaction', y='evaluation', hue='projectCount')
+plt.show()
+
+compute_plt_figuresize(10, 10)
+compute_sns_hist(d = df, x = 'satisfaction', y='evaluation', hue='department')
+plt.show()
+
+
+compute_plt_figuresize(10, 10)
+compute_sns_hist(d = df, x = 'satisfaction', y='evaluation', hue='salary')
+plt.show()
+
+
+# Can you check to see if there are any missing values in our data set
+df.isnull().sum()
+# Check the type of our features. Are there any data inconsistencies?
+df.dtypes
+
+
+
+# Display the statistical overview of the employees
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LassoCV
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import LabelEncoder
+
+le = LabelEncoder()
+department_df = df['department'] 
+salary_df = df['salary']
+
+department_df = pd.DataFrame(le.fit_transform(department_df))
+salary_df = pd.DataFrame(le.fit_transform(salary_df))
+
+df['department'] = department_df
+df['salary'] = salary_df
+
+X = df.drop('turnover', axis=1)
+y = df['turnover']
+
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+lasso_model = LassoCV(random_state=42, cv=5, n_jobs=-1)
+lasso_model.fit(X_train, y_train)
+lasso_model.score(X_test, y_test)
+
+y_pred = lasso_model.predict(X_test)
+
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("Mean Squared Error:", mse)
+print("R-squared:", r2)
+print(lasso_model.coef_)
+X
+
+
+df_salary = df['salary']
+df_department = df['department']
+
+X = df.drop(['turnover', 'salary', 'department'], axis=1)
+y = df['turnover']
+
+
+
+df_salary = pd.get_dummies(df_salary, prefix='salary')
+df_department = pd.get_dummies(df_department, prefix='department') 
+
+for col in df_salary.columns:
+    X[col] = df_salary[col]
+    
+for col in df_department.columns:
+    X[col] = df_department[col]
+
+X = X
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+lasso_model = LassoCV(random_state=42, cv=5, n_jobs=-1)
+lasso_model.fit(X_train, y_train)
+lasso_model.score(X_test, y_test)
+
+y_pred = lasso_model.predict(X_test)
+
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("Mean Squared Error:", mse)
+print("R-squared:", r2)
+print("Furtest Coefficents from 0, (i.e., most influential features for predicting employee retention)\n", lasso_model.coef_)
+
+params = lasso_model.get_params()
+
+# Print the parameters
+for param, value in params.items():
+    print(param, ":", value)
+    
+X = X.drop(['salary_2', 'department_0', 'department_2', 'department_5','department_6','department_7' ,'department_8'], axis=1)
+
+X
+
+
+
+sns.barplot(x = X.columns, y = [-0.61846635,  0.00334372, -0.02716408,  0.00074919,  0.03461857, -0.14292191, -0.04291915, -0.11148151, 0.0739893, -0.04879335, 0.00774751, -0.02846954, 0.00534369])
+plt.xticks(rotation=45, horizontalalignment='right')
+plt.ylabel('Lasso Model Coeeficent')
+plt.title('Lasso Model Furtest Coefficents from 0 -\n Most Influential Features for Predicting Employee Retention')
+plt.grid(axis='y') 
+plt.tight_layout()
+
+
+
+# Display the mean summary of Employees (Turnover V.S. Non-turnover). What do you notice between the groups?
+def compute_turnover_Summary(data = pd.DataFrame()):
+    return data.value_counts()
+
+
+turnover_summary = compute_turnover_Summary(y)
+
+sns.barplot(data=turnover_summary, x=['Stay', 'Leave'], y =turnover_summary.values)
+plt.title('Employee Turnover')
+plt.ylabel('Occurences')
+plt.grid(axis='y', alpha=0.25)
+plt.tight_layout()
+
+
+print(turnover_summary)
+print(f"\n{turnover_summary[1]/(turnover_summary[0]+turnover_summary[1]):.2f} Employee Turnover Ratio")
+print(f"\n{turnover_summary.std(ddof=0)/14999:.2f} Standard Deviation of Population")
+
+# Create a correlation matrix. What features correlate the most with turnover? What other correlations did you find?
+plt.subplots(figsize=(10, 10))
+sns.heatmap(X.corr(), annot = True, fmt=".2f", robust=True, linewidth=1)
+plt.title(f'{len(X.columns)} Best Predictors of Employee Turnover from LassoCV Model -\nHow these features Correlate with Eachother ')
+plt.xticks(rotation=45, horizontalalignment='right')
+plt.tight_layout()
+plt.show()
+
+plt.subplots(figsize=(10, 10))
+sns.heatmap(df.corr(), annot = True, fmt=".2f", robust=True, linewidth=1)
+plt.title(f'Correlation Heatmap of the all Orignal Dataset Features')
+plt.xticks(rotation=45, horizontalalignment='right')
+plt.tight_layout()
+
+
+sns.catplot(data = df, x ='projectCount', hue='turnover', kind='count')
+
+plt.grid(axis='y', alpha=0.25)
+plt.xlabel('Number of Projetcts')
+plt.tight_layout()
+
+# Import KMeans Model
+from sklearn.cluster import KMeans
+
+# Graph and create 3 clusters of Employee Turnover
+kmeans = KMeans(n_clusters=3, random_state=2)
+kmeans.fit(df[df.turnover==1][["satisfaction","evaluation"]])
+
+kmeans_colors = ['green' if c == 1 else 'blue' if c == 2 else 'red' for c in kmeans.labels_]
+
+fig = plt.figure(figsize=(10, 6))
+plt.scatter(x="satisfaction",y="evaluation", data=df[df.turnover==1],
+            alpha=0.25,color = kmeans_colors)
+plt.xlabel("Satisfaction")
+plt.ylabel("Evaluation")
+plt.scatter(x=kmeans.cluster_centers_[:,0],y=kmeans.cluster_centers_[:,1],color="black",marker="X",s=100)
+plt.title("Clusters of Employee Turnover")
+
+plt.show()
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, confusion_matrix, precision_recall_curve
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.8, random_state=123)
+
+print(X_train.shape)
+print(X_test.shape)
+
+round(df.turnover.value_counts(1), 2)
+
+from sklearn.utils import resample
+from imblearn.over_sampling import SMOTE
+
+# Upsample using SMOTE
+sm = SMOTE(random_state=12, sampling_strategy = 1.0)
+x_train_sm, y_train_sm = sm.fit_resample(X_train, y_train)
+
+
+print("Original shape:", X_train.shape, y_train.shape)
+print ("SMOTE sample shape:", x_train_sm.shape, y_train_sm.shape)
+
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score, KFold
+
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import accuracy_score
+
+lr = LogisticRegression()
+
+cv = KFold(n_splits=5, shuffle=True, random_state=42)
+lr_score = cross_val_score(lr, x_train_sm, y_train_sm, cv = 5)
+
+
+
+print(f'Logistic Regression Accuracy Scores from 5 fold CV: {lr_score}. Avg: {lr_score.mean():.4f}')
+
+lr = lr.fit(x_train_sm, y_train_sm)
+lr
+
+print ("\n\n ---Logistic Regression Model---")
+lr_auc = roc_auc_score(y_test, lr.predict(X_test))
+print ("Logistic Regression AUC = %2.2f" % lr_auc)
+lr2 = lr.fit(x_train_sm, y_train_sm)
+print(classification_report(y_test, lr.predict(X_test)))
+
+
+
+
+from sklearn.ensemble import RandomForestClassifier
+# Random Forest Model
+rf = RandomForestClassifier()
+
+cv = KFold(n_splits=5, shuffle=True, random_state=42)
+rf_score = cross_val_score(rf, x_train_sm, y_train_sm, cv = 5)
+print(f'Random Forest Accuracy Scores from 5 fold CV: {rf_score}. Avg: {rf_score.mean():.4f}')
+rf = rf.fit(x_train_sm, y_train_sm)
+rf
+
+from sklearn.metrics import roc_auc_score
+print ("\n\n ---Random Forest Model---")
+rf_roc_auc = roc_auc_score(y_test, rf.predict(X_test))
+print ("Random Forest AUC = %2.2f" % rf_roc_auc)
+print(classification_report(y_test, rf.predict(X_test)))
+
+
+
+from sklearn.ensemble import GradientBoostingClassifier
+gbc = GradientBoostingClassifier()
+cv = KFold(n_splits=5, shuffle=True, random_state=42)
+gbc_score = cross_val_score(gbc, x_train_sm, y_train_sm, cv = 5)
+print(f'Gradient Boosting Accuracy Scores from 5 fold CV: {gbc_score}. Avg: {gbc_score.mean():.4f}')
+gbc = gbc.fit(x_train_sm, y_train_sm)
+gbc
+
+from sklearn.metrics import roc_auc_score
+print ("\n\n ---Gradient Boosting Model---")
+gbc_auc = roc_auc_score(y_test, gbc.predict(X_test))
+print ("Gradient Boosting Classifier AUC = %2.2f" % gbc_auc)
+
+# Create ROC Graph
+from sklearn.metrics import roc_curve
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+
+fpr, tpr, thresholds = roc_curve(y_test, lr.predict_proba(X_test)[:,1])
+rf_fpr, rf_tpr, rf_thresholds = roc_curve(y_test, rf.predict_proba(X_test)[:,1])
+gbc_fpr, gbc_tpr, gbc_thresholds = roc_curve(y_test, gbc.predict_proba(X_test)[:,1])
+
+
+plt.figure(figsize=(15,12))
+
+# Plot Logistic Regression ROC
+plt.plot(fpr, tpr, label='Logistic Regression (area = %0.2f)' % lr_auc)
+
+# Plot Random Forest ROC
+plt.plot(rf_fpr, rf_tpr, label='Random Forest Classifier (area = %0.2f)' % rf_roc_auc)
+
+# Plot Decision Tree ROC
+plt.plot(gbc_fpr, gbc_tpr, label='Gradient Boosting Classifier (area = %0.2f)' % gbc_auc)
+
+# Plot Base Rate ROC
+plt.plot([0,1], [0,1],label='Base Rate')
+
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Graph')
+plt.legend(loc="lower right")
+plt.show()
+
+# Confusion Matrix for Logistic Regresion
+disp = ConfusionMatrixDisplay(confusion_matrix(y_test, lr.predict(X_test)))
+disp.plot()
+plt.title('Confusion Matrix for Logistic Regresion')
+plt.show()
+# Confusion Matrix for GBC
+disp = ConfusionMatrixDisplay(confusion_matrix(y_test, gbc.predict(X_test)))
+disp.plot()
+plt.title('Confusion Matrix for GBC')
+plt.show()
+# Confusion Matrix for Random Forest
+disp = ConfusionMatrixDisplay(confusion_matrix(y_test, rf.predict(X_test)))
+disp.plot()
+plt.title('Confusion Matrix for Random Forest')
+plt.show()
+
+# Ranking turnover probability for employees
+rf_predictions = rf.predict_proba(X_test)
+
+df_rf_predictions = pd.DataFrame(data=rf_predictions[:, 1], index = range(0, len(rf_predictions)), columns=['Turnover probability'])
+ground_truth = pd.DataFrame(data=list(y_test.where(y_test == 0)), index = range(0, len(y_test)), columns=['Stay'])
+
+df_rf_predictions["Ground Truth (0's Stayed, 1's Left)"] = ground_truth.fillna(1)
+df_rf_predictions.sort_values(by = 'Turnover probability', ascending = False).head()
+
+list(rf.predict_proba(X_test)[175:185, :])
+X_test.iloc[175:185, :]
+
+
+def randomForestPredictions(start = int, stop = int, precantage = float): 
+    print(f'Random Forest Model Predictions(> {precantage}): {list(rf.predict_proba(X_test)[start:stop, 1] > precantage)}')
+    print(f'Ground Truth:                           {list(y_test[start:stop] == 1)}')
+
+        
+randomForestPredictions(89, 109, 0.2)
+y_test
+
+
+
+'''Safe zone (Green) (score < 20%)
+Low-risk zone (Yellow) (20% < score < 60%)
+Medium risk zone (Orange) (60% < score < 90%)
+High-risk zone (Red) (score > 90%)'''
+i = 0
+for value in list(df_rf_predictions['Turnover probability']):
+    
+    if value < 0.2:
+        df_rf_predictions['Risk Class'][i] = 'Safe'
+    elif value < 0.6:
+        df_rf_predictions['Risk Class'][i] = 'Low risk'
+    elif value < 0.9:
+        df_rf_predictions['Risk Class'][i] = 'Medium risk'
+    else:
+        df_rf_predictions['Risk Class'][i] = 'High risk'
+    i += 1  
+        
+df_rf_predictions
+
+
+df_rf_predictions.sort_values(by = 'Turnover probability', ascending = False)
+risks_palette = {"Safe": "green", "Low risk": "yellow", "Medium risk": "orange", "High risk": "red"}
+
+sns.catplot(data=df_rf_predictions, y='Turnover probability', x = 'Risk Class', hue="Risk Class", palette=risks_palette, alpha = 0.25)
+plt.legend()
+sns.catplot(data=df_rf_predictions, y='Turnover probability', x = 'Risk Class', hue="Ground Truth (0's Stayed, 1's Left)", alpha = 0.25)
+
+
+sns.catplot(data=df_rf_predictions, x="Risk Class", y="Turnover probability", hue="Ground Truth (0's Stayed, 1's Left)", kind="boxen")
+sns.catplot(data=df_rf_predictions, x="Risk Class", y="Turnover probability", hue="Ground Truth (0's Stayed, 1's Left)", kind="violin", split=True, )
+sns.catplot(data=df_rf_predictions, x="Risk Class", hue="Risk Class", palette=risks_palette, kind = 'count')
+plt.title('Count of Predicted Risk Classes')
+plt.grid(axis='y', alpha = 0.25)
+plt.ylabel('Count per Risk Class')
+plt.xticks(rotation=45, horizontalalignment='right')
+plt.tight_layout()
+
+df_rf_predictions.corr()
