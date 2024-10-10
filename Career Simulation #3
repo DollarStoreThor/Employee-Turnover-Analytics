@@ -1,0 +1,17 @@
+# Import the neccessary modules for data manipulation and visual representation
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings("ignore")
+%matplotlib inline
+
+def compute_df():
+    # TODO: Implement this function
+    df = pd.read_csv('HR_comma_sep.csv')
+    return df
+
+df = compute_df()
+df.head()
+
